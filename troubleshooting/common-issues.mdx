@@ -1,0 +1,139 @@
+---
+title: "Common issues"
+description: "Solutions to frequently encountered problems with Itemzflow."
+---
+
+<Warning>
+Slow or stuck game dumps are **not a bug in Itemzflow** and are intentionally not supported as reportable issues. If your dump is slow or stalled, see the "Game dump is slow or stuck" entry below. Do not open a GitHub issue for this.
+</Warning>
+
+<AccordionGroup>
+  <Accordion title="App crashes on startup / shows FATAL signal">
+    When Itemzflow encounters an unrecoverable error at startup, it displays a "FATAL Signal" dialog and exits.
+
+    **Steps to resolve:**
+
+    1. Make sure your jailbreak is active. The Itemz Loader calls `jbc_run_as_root` from `jb.prx` at startup — if the jailbreak is not active or the PRX cannot be loaded, the loader exits immediately before the main app starts.
+    2. Re-run HEN or GoldHEN before launching Itemzflow.
+    3. After the crash, check the following logs for the specific error:
+       - `/user/app/ITEM00001/logs/itemzflow_app.log` — main app error
+       - `/user/app/ITEM00001/logs/loader.log` — loader-stage errors
+
+    If the issue persists after confirming your jailbreak is active, share the log in the [Discord](https://discord.gg/GvzDdx9GTc) or open a [GitHub Issue](https://github.com/LightningMods/Itemzflow/issues).
+  </Accordion>
+
+  <Accordion title="Covers fail to download">
+    If game cover art is not downloading, check the following:
+
+    1. **Internet access** — ensure your PS4 has a working internet connection. Test by navigating to the PS4 Settings > Network > Test Internet Connection.
+    2. **DNS blocking** — some DNS servers block the cover download URLs. Try switching to a different DNS (such as `8.8.8.8`) in your PS4 network settings and retry.
+
+    If covers still fail to appear after changing DNS, report the issue with a note on which DNS you are using and the contents of `/user/app/ITEM00001/logs/itemzflow_app.log`.
+  </Accordion>
+
+  <Accordion title="Game dump is slow or stuck">
+    Slow or stuck dumps are caused by incomplete game installations on the PS4, not by a bug in the dumper.
+
+    **Before dumping, ensure:**
+
+    - **Both discs are inserted** — if your game came on multiple discs, all must be present.
+    - **All languages are installed** — if any language packs are available for the game, install them all before dumping.
+
+    The dumper will stall if it tries to access a file that was never installed. Once all content is installed, restart the dump.
+
+    <Warning>
+      Do not open a GitHub issue for slow or stuck dumps. Per the project's issue guidelines, these reports are not accepted.
+    </Warning>
+
+    If your dump fails with an error (not just slowness), check the dumper log at `/user/app/ITEM00001/logs/if_dumper.log` and share it in the [Discord](https://discord.gg/GvzDdx9GTc).
+  </Accordion>
+
+  <Accordion title="Daemon not connecting">
+    If Itemzflow cannot connect to the background daemon, IPC commands (playtime tracking, home redirect, FUSE mounts) will not work.
+
+    **Steps to resolve:**
+
+    1. Check the daemon log at `/data/itemzflow_daemon/daemon.log` for any error messages.
+    2. Try disabling the daemon's auto-connect by setting `Daemon_on_start=0` in your `settings.ini`, then relaunching Itemzflow and manually triggering the connection.
+    3. If the daemon was recently updated, wait a moment — the app updates the daemon binary automatically on first launch after an update, which requires a brief restart.
+
+    ```ini
+    [Settings]
+    Daemon_on_start=0
+    ```
+  </Accordion>
+
+  <Accordion title="NFS/FUSE mount fails">
+    If mounting a network share via NFS/FUSE does not work, check the following:
+
+    1. **IP format** — the `Fuse_IP` setting must use the exact format `nfs://IP/share_name`. If your share name is `/`, you can use just the IP address instead.
+
+       ```ini
+       Fuse_IP=nfs://192.168.1.100/nfs_share
+       ```
+
+    2. **Firmware support** — the IPC error code `FUSE_FW_NOT_SUPPORTED` (code 5) means FUSE is not supported on your current firmware version.
+
+    3. **libfuse log** — check `/data/itemzflow_daemon/libfuse.log` for detailed FUSE error output.
+
+    4. **Restart FUSE** — from within the app, trigger the `RESTART_FUSE_FS` command to restart the FUSE filesystem without rebooting. This resolves most transient mount failures.
+  </Accordion>
+
+  <Accordion title="Home redirect not working">
+    The home redirect replaces the PS4 home button behavior so that pressing Home returns to Itemzflow instead of the system menu.
+
+    **Checklist:**
+
+    - Confirm `HomeMenu_Redirection=1` is set in your `settings.ini`.
+    - Confirm the daemon is running. The home redirect is handled by the daemon via the `ENABLE_HOME_REDIRECT` IPC command — if the daemon is not connected, the redirect cannot be activated.
+
+    ```ini
+    [Settings]
+    HomeMenu_Redirection=1
+    ```
+  </Accordion>
+
+  <Accordion title="Custom theme not loading">
+    If a custom theme is installed but not appearing, work through this checklist:
+
+    1. **Setting enabled** — confirm `Enable_Theme=1` is set in your `settings.ini`.
+
+       ```ini
+       [Settings]
+       Enable_Theme=1
+       ```
+
+    2. **Exact filenames** — theme files must use the exact filenames listed below. Any deviation (including case differences) will cause the theme to fail silently.
+
+       | File | Description |
+       |---|---|
+       | `background.png` | Background image |
+       | `font.ttf` | Theme font |
+       | `shader.bin` | PS4 GLES compiled shader |
+       | `theme.ini` | Theme metadata |
+       | `btn_x.png`, `btn_o.png`, etc. | Button images |
+
+    3. **theme.ini format** — verify the `theme.ini` file is correctly structured. The `Image`, `Font`, and `Shader` fields must be set to `1` only if the corresponding file is actually present.
+
+       ```ini
+       [THEME]
+       Name=My Theme
+       Author=Author Name
+       Date=01/01/2024
+       Version=1.00
+       Image=1
+       Font=1
+       Shader=0
+       ```
+  </Accordion>
+
+  <Accordion title="Issue auto-closed on GitHub">
+    GitHub issues are automatically closed if there is no response from the reporter within **48 hours** of a maintainer reply. This policy exists to prevent "ghost" issues from accumulating.
+
+    If your issue was closed due to inactivity, you can reopen it — but make sure to respond promptly once a maintainer follows up.
+
+    <Note>
+      Maintainers may take a few days to a few weeks to respond. The absence of a response does not mean the issue is being ignored.
+    </Note>
+  </Accordion>
+</AccordionGroup>

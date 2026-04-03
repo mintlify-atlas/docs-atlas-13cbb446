@@ -1,0 +1,52 @@
+---
+title: "Playtime Tracking"
+description: "Track time spent in each PS4 game automatically."
+---
+
+Itemzflow tracks how many minutes you spend in each game. The tracking is handled by the background daemon and requires no configuration.
+
+## How it works
+
+Tracking is split across two components:
+
+- **The daemon** records session start times and accumulates total minutes played per Title ID. All playtime data is stored in the daemon's SQLite database.
+- **The main app** polls the daemon every 50 seconds via IPC and updates the displayed playtime while a game is running.
+
+The polling loop runs in a dedicated thread (`ItemzCore_PlayTime_thread`). Each iteration sends a `GAME_GET_MINS` command, waits 50 seconds, then repeats. The displayed minutes value updates as soon as the daemon responds.
+
+## IPC commands
+
+| Command | Description |
+|---|---|
+| `GAME_GET_MINS` | Returns the total minutes played for a given Title ID as a decimal string |
+| `GAME_GET_START_TIME` | Returns the Unix epoch timestamp of the current session's start time |
+
+Both commands take the Title ID as the message payload and return the result in the response message field.
+
+### Example flow
+
+```
+App  →  Daemon:  GAME_GET_MINS  msg="CUSA03694"
+Daemon →  App:   NO_ERROR       msg="142"
+```
+
+The app reads `"142"` from the response, parses it with `sscanf`, and stores it in `mins_played` for display.
+
+## Idle detection
+
+If the controller has had no input for 15 minutes, the utility thread sets an `is_idle` flag. While idle, the playtime thread skips its polling loop — the daemon stops receiving queries, and the displayed playtime pauses.
+
+The idle timer resets on any controller input. Pressing the touchpad on the DualShock 4 is one way to reset it explicitly.
+
+```
+idle threshold: 15 minutes of no controller input
+polling interval: every 50 seconds when not idle
+```
+
+## No configuration needed
+
+Playtime tracking starts automatically when the daemon is running. You do not need to enable any setting. The daemon is installed to `/system/vsh/app/ITEM00002` on first launch and starts with Itemzflow on every subsequent boot.
+
+<Note>
+  If the daemon is not connected (for example, because `Daemon_on_start=0` is set in `settings.ini`), the playtime display shows a not-available status instead of a minute count.
+</Note>

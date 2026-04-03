@@ -1,0 +1,72 @@
+---
+title: "Settings"
+description: "Configure Itemzflow behavior via settings.ini."
+---
+
+Itemzflow reads its configuration from a `settings.ini` file. You can place this file in the app directory or on your USB drive at `/mnt/usb0/settings.ini` — Itemzflow checks the USB path first on boot.
+
+<Tip>
+  Keep your `settings.ini` on a USB drive (`/mnt/usb0/settings.ini`) so you can edit it on a PC without needing FTP access to your PS4.
+</Tip>
+
+## Settings reference
+
+| INI key             | Description                                                  | Valid values                                          |
+|---------------------|--------------------------------------------------------------|-------------------------------------------------------|
+| `Dumper_option`     | Controls what content the game dumper exports                | `0` = ALL, `1` = Base game only, `2` = Patch only     |
+| `Sort_By`           | Sets the sort order for your game library                    | `-1` = None, `0` = Alphabetical by Title ID, `1` = Alphabetical by app name |
+| `Sort_Cat`          | Sets the sort category                                       | Integer category index                                |
+| `cover_message`     | Shows the cover message on app startup                       | `0` = Off, `1` = On                                  |
+| `MP3_Path`          | Path to a folder of MP3s or a single MP3 file to play on loop | Filesystem path, e.g. `/mnt/usb0/music`              |
+| `Dumper_Path`       | Destination path for game dumps                             | Filesystem path, e.g. `/mnt/usb0`                    |
+| `TTF_Font`          | Custom TTF font for the UI — falls back to the embedded font if the path is invalid | Filesystem path, e.g. `/mnt/usb0/myfont.ttf` |
+| `Show_Buttons`      | Displays controller button prompts on screen                 | `0` = Off, `1` = On                                  |
+| `Enable_Theme`      | Activates a custom theme — has no effect without a valid theme installed | `0` = Off, `1` = On               |
+| `Image_path`        | Path to a PNG file used as the background image              | Filesystem path, e.g. `/mnt/usb0/pic.png`            |
+| `Reflections`       | Enables cover art reflections in the game list               | `0` = Off, `1` = On                                  |
+| `HomeMenu_Redirection` | Enables the home menu redirect so Itemzflow launches instead of the default shell | `0` = Off, `1` = On    |
+| `Daemon_on_start`   | Prevents the daemon from auto-connecting when the app opens  | `0` = Auto-connect enabled, `1` = Auto-connect disabled |
+| `Show_install_prog` | Enables a progress indicator when installing PKGs or apps from the store | `0` = Off, `1` = On              |
+| `Fuse_IP`           | NFS share address for mounting a PC network share            | `nfs://IP/share_name`, e.g. `nfs://192.1.2.3/nfs_share` |
+| `Background_install` | Enables background PKG installation while the app continues to run | `0` = Off, `1` = On |
+| `Stop_Daemon_on_close` | Stops the background daemon when Itemzflow is closed        | `0` = Off, `1` = On |
+| `Secure_Boot`       | Internal security check used by the loader on startup         | `1` = Enabled (do not change) |
+
+## NFS share format
+
+The `Fuse_IP` value must follow the NFS URI format:
+
+```ini
+Fuse_IP=nfs://PC_IP/share_name
+```
+
+If your share name is `/`, you can enter the IP address on its own:
+
+```ini
+Fuse_IP=192.168.1.100
+```
+
+You can also set this value using the in-app keyboard under the NFS settings screen.
+
+## Example settings.ini
+
+```ini
+[Settings]
+Dumper_option=0
+Sort_By=-1
+Sort_Cat=0
+cover_message=1
+MP3_Path=/mnt/usb0/music
+Dumper_Path=/mnt/usb0
+TTF_Font=/mnt/usb0/myfont.ttf
+Show_Buttons=1
+Enable_Theme=1
+Image_path=/mnt/usb0/pic.png
+Reflections=1
+HomeMenu_Redirection=1
+Daemon_on_start=0
+Show_install_prog=1
+Fuse_IP=nfs://192.1.2.3/nfs_share
+Background_install=0
+Stop_Daemon_on_close=0
+```

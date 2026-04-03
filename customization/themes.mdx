@@ -1,0 +1,87 @@
+---
+title: "Themes"
+description: "Install or create custom themes for Itemzflow."
+---
+
+Themes let you customize the look of Itemzflow with custom backgrounds, fonts, button graphics, and compiled GLES shaders. You can download themes made by the community or build your own from scratch.
+
+## Getting themes
+
+<CardGroup cols={2}>
+  <Card title="Download a community theme" icon="download" href="https://github.com/LightningMods/itemzflow-themes">
+    Browse and download themes from the official Itemzflow Themes repository on GitHub.
+  </Card>
+  <Card title="Create your own theme" icon="paintbrush">
+    Build a theme by supplying the required image files, an optional font and shader, and a `theme.ini` config file.
+  </Card>
+</CardGroup>
+
+## Installing a theme
+
+<Steps>
+  <Step title="Place theme files in the theme folder">
+    Copy your theme's files into the app's theme directory on your PS4. All files must use the exact filenames listed in the [theme files reference](#theme-files-reference) below.
+  </Step>
+  <Step title="Enable the theme in settings.ini">
+    Open your `settings.ini` and set `Enable_Theme=1`. See [Settings](/customization/settings) for the full settings reference.
+  </Step>
+  <Step title="Restart Itemzflow">
+    Close and relaunch Itemzflow. The theme loads on startup.
+  </Step>
+</Steps>
+
+<Warning>
+  Theme files must use the exact filenames listed below. Itemzflow will not recognize files with different names.
+</Warning>
+
+## Theme files reference
+
+| Filename          | Description                  | Required dimensions |
+|-------------------|------------------------------|---------------------|
+| `btn_o.png`       | Circle button                | 67×68 px            |
+| `btn_x.png`       | Cross button                 | 67×68 px            |
+| `btn_tri.png`     | Triangle button              | 67×68 px            |
+| `btn_sq.png`      | Square button                | 67×68 px            |
+| `btn_r1.png`      | R1 button                    | 309×152 px          |
+| `btn_l1.png`      | L1 button                    | 120×59 px           |
+| `btn_l2.png`      | L2 button                    | 120×105 px          |
+| `btn_options.png` | Options button               | 145×84 px           |
+| `btn_up.png`      | D-Pad up                     | 32×32 px            |
+| `btn_down.png`    | D-Pad down                   | 32×32 px            |
+| `btn_left.png`    | D-Pad left                   | 32×32 px            |
+| `btn_right.png`   | D-Pad right                  | 32×32 px            |
+| `font.ttf`        | Theme font                   | —                   |
+| `background.png`  | Background image             | —                   |
+| `shader.bin`      | PS4 GLES compiled shader     | —                   |
+| `theme.ini`       | Theme metadata and feature flags | —               |
+
+<Note>
+  `shader.bin` must be a compiled PS4 GLES shader binary. You cannot use a shader source file or a shader compiled for a different platform.
+</Note>
+
+## theme.ini format
+
+The `theme.ini` file describes your theme and tells Itemzflow which optional files to load. Set `Image`, `Font`, and `Shader` to `1` only if you have included the corresponding file.
+
+| Key       | Description                                        |
+|-----------|----------------------------------------------------|
+| `Name`    | Display name of the theme                          |
+| `Author`  | Name of the theme creator                          |
+| `Date`    | Date the theme was created                         |
+| `Version` | Theme version number                               |
+| `Image`   | `1` if the theme includes `background.png`, `0` if not |
+| `Font`    | `1` if the theme includes `font.ttf`, `0` if not  |
+| `Shader`  | `1` if the theme includes `shader.bin`, `0` if not |
+
+### Example theme.ini
+
+```ini
+[THEME]
+Name=Example Theme
+Author=Example Author
+Date=10/16/2022
+Version=1.00
+Image=1
+Font=1
+Shader=0
+```

@@ -1,0 +1,124 @@
+---
+title: "The Itemz loader"
+description: "The separate launcher app that performs the jailbreak and launches the main Itemzflow app."
+---
+
+The Itemz loader is a separate PS4 application (part of the `ITEM00001` PKG) that runs before the main Itemzflow UI. It loads `jb.prx` (the jailbreak PRX), performs the jailbreak via `libjbc`, and then launches `ItemzCore.self` — the main Itemzflow application.
+
+<Note>
+  The `itemz-loader` source folder is for internal development use. Do not replace or modify `jb.prx` manually — the loader verifies the daemon hash on startup and will reinstall or restart the daemon if it is out of date.
+</Note>
+
+## What the loader does
+
+When ITEM00001 starts, the loader runs first. It handles:
+
+1. Loading `jb.prx` from `/app0/Media/jb.prx` and resolving the `jbc_run_as_root` function
+2. Performing the jailbreak by calling `jbc_run_as_root(loader_rooted, NULL, CWD_ROOT)`
+3. Setting up the filesystem environment (mounting `/system_ex`, creating log directories)
+4. Creating a default `settings.ini` if one does not exist
+5. Starting daemon services
+6. Launching `ItemzCore.self` — the main Itemzflow app
+
+```c
+// itemz-loader/source/main.c — entry point
+libjb = sceKernelLoadStartModule("/app0/Media/jb.prx", 0, NULL, 0, 0, 0);
+int ret = sceKernelDlsym(libjb, "jbc_run_as_root", (void**)&jbc_run_as_root);
+if (ret >= 0) {
+    jbc_run_as_root(loader_rooted, NULL, CWD_ROOT);
+} else {
+    msgok("%s: %x", getLangSTR(FATAL_JB), ret);
+    goto err;
+}
+
+// After rooted setup completes:
+sceSystemServiceLoadExec("/app0/ItemzCore.self", 0);
+```
+
+If `jbc_run_as_root` cannot be resolved from the PRX, or the jailbreak fails, the loader displays a fatal error dialog and exits. There is no partial state — either the jailbreak succeeds and `ItemzCore.self` is launched, or the process does not advance.
+
+## Default settings.ini creation
+
+If no `settings.ini` is found at `/mnt/usb0/settings.ini` or `/user/app/ITEM00001/settings.ini`, the loader creates one automatically with these defaults:
+
+```ini
+[Settings]
+Sort_By=1
+Secure_Boot=1
+Dumper_option=0
+FTP_Auto_Start=1
+Show_install_prog=1
+HomeMenu_Redirection=0
+Daemon_on_start=1
+cover_message=1
+```
+
+## Recovery mode
+
+The loader checks for a recovery flag file at `/mnt/usb0/recovery.flag` or `/user/recovery.flag`. If found, it presents a confirmation dialog offering a **factory reset** of Itemzflow — this deletes all app stats, covers, settings, updates, and themes, while preserving the PKG structure. The flag file is removed after the reset completes.
+
+## Jailbreak implementation
+
+The PRX (`jb.prx`) is built on [libjbc](https://github.com/sleirsgoevy/ps4-libjbc). The key symbol the loader resolves is:
+
+| Symbol | Purpose |
+|--------|---------|
+| `jbc_run_as_root` | Elevates the calling process to root privileges via libjbc, then calls the provided callback function |
+
+The `loader_rooted` callback (run with root privileges) mounts `/system_ex`, creates required directories, starts daemon services, and performs any recovery operations before handing control back to the main loader flow.
+
+## Hash verification
+
+The loader checks whether the daemon at `/system/vsh/app/ITEM00002` is up to date with the installed PKG. If the hash does not match, the loader triggers a daemon restart before proceeding. This ensures the two components are always in sync.
+
+## Build details
+
+<Tabs>
+  <Tab title="Toolchain">
+    The loader is compiled with clang via the OpenOrbis PS4 Toolchain. Building requires:
+
+    - The `OO_PS4_TOOLCHAIN` environment variable set to the toolchain root
+    - A patched `link.x` from the OpenOrbis repo
+    - Patched `create-lib` and `create-eboot` binaries (see the loader README for the exact commits)
+
+    ```bash
+    # Linux build
+    make
+    ```
+  </Tab>
+  <Tab title="Libraries">
+    The PRX links against two system libraries only:
+
+    | Library | Purpose |
+    |---------|---------|
+    | `libSceLibcInternal` | C runtime support |
+    | `libkernel` | Low-level kernel syscall interface |
+  </Tab>
+  <Tab title="Source layout">
+    ```
+    itemz-loader/
+    ├── source/
+    │   ├── main.c       # Entry point: jailbreak + launch ItemzCore.self
+    │   ├── app.cpp      # loader_rooted callback: filesystem setup, daemon start
+    │   ├── daemon.cpp   # Daemon service management
+    │   ├── ini.c        # INI file parser
+    │   ├── lang.c       # Language string loader
+    │   └── msgs.c       # Message/dialog helpers
+    ├── include/
+    │   ├── Header.h     # Main header with function declarations
+    │   ├── ipc_client.hpp
+    │   ├── lang.h
+    │   └── md5.h
+    └── Makefile
+    ```
+  </Tab>
+</Tabs>
+
+## Log files
+
+| Log | Path | Notes |
+|-----|------|-------|
+| Loader log | `/user/app/ITEM00001/logs/loader.log` | Written on every launch |
+| USB fallback | `/usb0/itemzflow/loader.log` | Copied here only on crash or failure |
+
+If Itemzflow fails to start, check `loader.log` first. A missing `jbc_run_as_root` symbol, a failed jailbreak call, or a daemon hash mismatch will all produce entries there before the process exits.

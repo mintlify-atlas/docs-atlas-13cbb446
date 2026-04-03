@@ -1,97 +1,69 @@
 ---
-title: "Introduction"
-description: "Welcome to the new home for your documentation"
+title: "Itemzflow"
+description: "The PS4 game manager and home menu alternative. Browse your library, install PKGs, dump games, apply patches, and more — all from one homebrew app."
 ---
 
-## Setting up
+Itemzflow is an open-source homebrew application for the PlayStation 4 that replaces the default home menu with a fully-featured game manager. It lets you install packages, dump games to USB, apply game patches, mount network shares, and track playtime — all without leaving the app.
 
-Get your documentation site up and running in minutes.
-
-<Card
-  title="Start here"
-  icon="rocket"
-  href="/quickstart"
-  horizontal
->
-  Follow our three step quickstart guide.
-</Card>
-
-## Make it yours
-
-Design a docs site that looks great and empowers your users.
-
-<Columns cols={2}>
-  <Card
-    title="Edit locally"
-    icon="pen-to-square"
-    href="/development"
-  >
-    Edit your docs locally and preview them in real time.
+<CardGroup cols={2}>
+  <Card title="Installation" icon="download" href="/installation">
+    Download and install Itemzflow on your PS4 for the first time.
   </Card>
-  <Card
-    title="Customize your site"
-    icon="palette"
-    href="/essentials/settings"
-  >
-    Customize the design and colors of your site to match your brand.
+  <Card title="Quick Start" icon="rocket" href="/quickstart">
+    Get up and running in minutes with the essential features.
   </Card>
-    <Card
-    title="Set up navigation"
-    icon="map"
-    href="/essentials/navigation"
-  >
-    Organize your docs to help users find what they need and succeed with your product.
+  <Card title="Features" icon="gamepad" href="/features/game-manager">
+    Explore the full feature set: game manager, PKG installer, dumper, and more.
   </Card>
-  <Card
-    title="API documentation"
-    icon="terminal"
-    href="/api-reference/introduction"
-  >
-    Auto-generate API documentation from OpenAPI specifications.
+  <Card title="Customization" icon="palette" href="/customization/settings">
+    Configure settings, install themes, and set your preferred language.
   </Card>
-</Columns>
+</CardGroup>
 
-## Create beautiful pages
+## What Itemzflow can do
 
-Everything you need to create world-class documentation.
+<CardGroup cols={3}>
+  <Card title="Game Manager" icon="list" href="/features/game-manager">
+    Browse and launch all your installed PS4 games with cover art, sorting, and favorites.
+  </Card>
+  <Card title="PKG Installer" icon="box-archive" href="/features/pkg-installer">
+    Install PKG files from USB, local storage, or remote URLs using background download.
+  </Card>
+  <Card title="Game Dumper" icon="hard-drive" href="/features/game-dumper">
+    Dump base games, patches, or all content to USB in a single operation.
+  </Card>
+  <Card title="Game Patches" icon="wrench" href="/features/game-patches">
+    Apply XML-based game patches and trainers to modify game behavior.
+  </Card>
+  <Card title="Playtime Tracking" icon="clock" href="/features/playtime-tracking">
+    Track how many minutes you've spent in each game via the background daemon.
+  </Card>
+  <Card title="FTP & NFS" icon="network-wired" href="/features/ftp-nfs">
+    Access your PS4 filesystem remotely via FTP, or mount a PC network share via NFS.
+  </Card>
+</CardGroup>
 
-<Columns cols={2}>
-  <Card
-    title="Write with MDX"
-    icon="pen-fancy"
-    href="/essentials/markdown"
-  >
-    Use MDX to style your docs pages.
-  </Card>
-  <Card
-    title="Code samples"
-    icon="code"
-    href="/essentials/code"
-  >
-    Add sample code to demonstrate how to use your product.
-  </Card>
-  <Card
-    title="Images"
-    icon="image"
-    href="/essentials/images"
-  >
-    Display images and other media.
-  </Card>
-  <Card
-    title="Reusable snippets"
-    icon="recycle"
-    href="/essentials/reusable-snippets"
-  >
-    Write once and reuse across your docs.
-  </Card>
-</Columns>
+## Get started
 
-## Need inspiration?
+<Steps>
+  <Step title="Download Itemzflow">
+    Grab the latest PKG from [pkg-zone.com](https://pkg-zone.com/details/ITEM00001) or the [GitHub releases page](https://github.com/LightningMods/Itemzflow/releases).
+  </Step>
+  <Step title="Install on your PS4">
+    Use your existing homebrew installer to install the PKG. On first launch, Itemzflow installs its background daemon automatically.
+  </Step>
+  <Step title="Configure settings">
+    Optionally create a `settings.ini` on your USB drive or in the app directory to configure dump paths, sort order, custom fonts, and more. See [Settings](/customization/settings).
+  </Step>
+  <Step title="Explore your library">
+    Launch Itemzflow. Your installed games appear as a scrollable grid with cover art. Use the D-Pad or analog stick to navigate, and press **Cross** to launch a game.
+  </Step>
+</Steps>
 
-<Card
-  title="See complete examples"
-  icon="stars"
-  href="https://mintlify.com/customers"
->
-  Browse our showcase of exceptional documentation sites.
-</Card>
+<Note>
+  Itemzflow requires a jailbroken PS4. It will not function on stock firmware.
+</Note>
+
+## Community & support
+
+Join the [official Discord server](https://discord.gg/GvzDdx9GTc) to get help, share themes, and follow development. For bug reports, open an issue on [GitHub](https://github.com/LightningMods/Itemzflow/issues) and include your app log from `/user/app/ITEM00001/logs/itemzflow_app.log`.

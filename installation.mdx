@@ -1,0 +1,76 @@
+---
+title: "Installation"
+description: "Download and install Itemzflow on your jailbroken PS4."
+---
+
+<Warning>
+  Itemzflow only works on a jailbroken PS4. Installing it on stock firmware will not work and may cause errors during launch.
+</Warning>
+
+<Steps>
+  <Step title="Check prerequisites">
+    Before installing, make sure you have:
+
+    - A **jailbroken PS4** running a supported firmware
+    - A homebrew enabler active — either **HEN** or **GoldHEN**
+    - A **USB drive** formatted to exFAT or FAT32 if you plan to dump games or use USB-based settings
+    - An existing **homebrew PKG installer** (such as the one built into GoldHEN or a standalone installer app)
+  </Step>
+
+  <Step title="Download the PKG">
+    Download the latest Itemzflow PKG from the official listing on **pkg-zone.com**:
+
+    [https://pkg-zone.com/details/ITEM00001](https://pkg-zone.com/details/ITEM00001)
+
+    The title ID is `ITEM00001`. Save the `.pkg` file to your USB drive or transfer it to your PS4 via FTP.
+  </Step>
+
+  <Step title="Install the PKG">
+    On your PS4, open your homebrew PKG installer and install the `ITEM00001` PKG you downloaded. The installation process is the same as any other homebrew PKG.
+
+    Once installed, Itemzflow appears in your PS4 app library.
+  </Step>
+
+  <Step title="Launch Itemzflow for the first time">
+    Open Itemzflow from your PS4 library. The Itemz Loader runs first — it loads `jb.prx`, performs the jailbreak, sets up required directories, and installs the background daemon on first launch to:
+
+    ```
+    /system/vsh/app/ITEM00002
+    ```
+
+    After the loader finishes, it launches `ItemzCore.self` — the main Itemzflow UI. The daemon handles playtime tracking, FTP, NFS mounts, and home redirect, and communicates with the main app over IPC. It is managed entirely by Itemzflow — you do not need to install or update it manually. The loader hash-checks the daemon on every startup to keep it in sync with the installed PKG version.
+
+    <Note>
+      The game cover grid appears shortly after launch. Covers are downloaded automatically when you have an internet connection. If covers are not loading, check that your DNS is not blocking the download server.
+    </Note>
+  </Step>
+
+  <Step title="Verify the installation">
+    After the app loads, confirm everything is working by checking the main log file. You can access logs over FTP or from within the app (press **Triangle** in the Settings menu to upload logs).
+
+    **Log file locations on the PS4:**
+
+    | Service | Path |
+    |---|---|
+    | Itemzflow main app | `/user/app/ITEM00001/logs/itemzflow_app.log` |
+    | Game dumper | `/user/app/ITEM00001/logs/if_dumper.log` |
+    | Loader | `/user/app/ITEM00001/logs/loader.log` |
+    | Daemon | `/data/itemzflow_daemon/daemon.log` |
+    | libfuse (NFS) | `/data/itemzflow_daemon/libfuse.log` |
+
+    If the app crashes, an additional crash log is written to your USB drive:
+
+    | Service | USB path |
+    |---|---|
+    | Itemzflow main app | `/mnt/usb<n>/itemzflow/crash.log` |
+    | Game dumper | `/mnt/usb<n>/itemzflow/dumper.log` |
+    | Loader | `/mnt/usb<n>/itemzflow/loader.log` |
+    | Daemon | `/mnt/usb<n>/itemzflow/daemon.log` |
+
+    If the log shows the app started and the game grid is visible, installation is complete.
+  </Step>
+</Steps>
+
+## Next steps
+
+Continue to the [quick start guide](/quickstart) to learn how to navigate the interface and configure basic settings.

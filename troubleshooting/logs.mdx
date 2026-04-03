@@ -1,0 +1,68 @@
+---
+title: "Log files"
+description: "Find and read Itemzflow log files to diagnose issues."
+---
+
+Itemzflow writes logs for each of its components separately. When something goes wrong, the relevant log file is the fastest way to identify the cause. This page explains where each log lives, how to access it, and how to submit it when asking for help.
+
+## Primary log paths
+
+These logs are written on every run. They are available on the PS4 filesystem and can be accessed via FTP from a PC.
+
+| Service | Path |
+|---|---|
+| Itemzflow main app | `/user/app/ITEM00001/logs/itemzflow_app.log` |
+| Dumper | `/user/app/ITEM00001/logs/if_dumper.log` |
+| Itemz Loader | `/user/app/ITEM00001/logs/loader.log` |
+| Itemz Daemon | `/data/itemzflow_daemon/daemon.log` |
+| libfuse | `/data/itemzflow_daemon/libfuse.log` |
+
+## USB fallback log paths
+
+On a crash or failure, Itemzflow writes a secondary copy of the log to the first USB drive it finds. These files are only created when something goes wrong — they are not written during normal operation.
+
+| Service | USB path |
+|---|---|
+| Itemzflow main app | `/mnt/usb<USB_NUMBER>/itemzflow/crash.log` |
+| Dumper | `/mnt/usb<USB_NUMBER>/itemzflow/dumper.log` |
+| Itemz Loader | `/mnt/usb<USB_NUMBER>/itemzflow/loader.log` |
+| Itemz Daemon | `/mnt/usb<USB_NUMBER>/itemzflow/daemon.log` |
+
+Replace `<USB_NUMBER>` with the number of the USB port your drive is plugged into (for example, `/mnt/usb0/itemzflow/crash.log`).
+
+## How to access logs
+
+**Via FTP (recommended)**
+
+Use an FTP client on your PC to connect to your PS4. Navigate to the path listed in the table above and download the file. The built-in FTP server in Itemzflow is available from the app's settings menu.
+
+**Via USB after a crash**
+
+If the app crashed, plug in a USB drive before reproducing the issue. After the crash, remove the drive and read the log files from the paths listed in the USB fallback table above.
+
+## How to submit logs when reporting an issue
+
+<Tip>
+Always include a log file when reporting an issue. Reports without logs are significantly harder to act on and may be closed for insufficient information.
+</Tip>
+
+**In-app upload (easiest)**
+
+1. Open Itemzflow and navigate to the **Settings** menu.
+2. Press **Triangle**.
+3. Type a description of your issue in the text box and submit.
+
+This automatically attaches the relevant logs to your report.
+
+**Manual upload**
+
+Download the log file via FTP or USB and attach it when reporting via:
+
+- The [official Discord server](https://discord.gg/GvzDdx9GTc)
+- A [GitHub Issue](https://github.com/LightningMods/Itemzflow/issues)
+
+The most important log for crashes and fatal errors is the main app log:
+
+```
+/user/app/ITEM00001/logs/itemzflow_app.log
+```

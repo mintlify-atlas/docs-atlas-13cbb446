@@ -1,0 +1,114 @@
+---
+title: "FAQ"
+description: "Frequently asked questions about Itemzflow."
+---
+
+<AccordionGroup>
+  <Accordion title="What PS4 firmware versions are supported?">
+    Itemzflow requires a jailbroken PS4. It does not run on stock firmware.
+
+    The firmware versions you can jailbreak depend on which exploit or HEN release you are using — Itemzflow itself does not impose a specific firmware requirement beyond what your jailbreak supports. Check the PS4 homebrew community for the latest information on which firmware versions are currently exploitable.
+  </Accordion>
+
+  <Accordion title="Does Itemzflow support PS5?">
+    Itemzflow runs on PS4. It is not a PS5 application.
+
+    However, if you are interested in which PS5 games are compatible when running through Itemzflow on PS4 hardware, a community-maintained compatibility list is available:
+
+    [PS5 game compatibility list (Google Sheets)](https://docs.google.com/spreadsheets/d/1TjOeFVNDR19ypTY2If099YOmllBaNsk4/edit?usp=sharing&ouid=116927497428698101556&rtpof=true&sd=true)
+  </Accordion>
+
+  <Accordion title="How do I report a bug?">
+    Follow the issue guidelines to give maintainers the best chance of reproducing and fixing your issue:
+
+    1. **Upload logs first** — in Itemzflow, go to **Settings**, press **Triangle**, and type your issue in the text box. This attaches your logs automatically.
+    2. **Troubleshoot first** — try the steps in [Common Issues](/troubleshooting/common-issues) before reporting.
+    3. **Be descriptive** — include what you did, what you expected, and what actually happened.
+    4. **Do not report slow dumps** — slow or stuck dumps are a user-side issue and are not accepted as bug reports.
+    5. **Include log files** — if you cannot use the in-app upload, attach the relevant log file manually. See [Log Files](/troubleshooting/logs).
+    6. **Respond within 48 hours** — if a maintainer replies to your issue, respond within 48 hours or the issue will be auto-closed.
+
+    Report bugs on [GitHub Issues](https://github.com/LightningMods/Itemzflow/issues) or in the [Discord](https://discord.gg/GvzDdx9GTc).
+  </Accordion>
+
+  <Accordion title="How do I update Itemzflow?">
+    There are two ways to update:
+
+    - **In-app update** — Itemzflow can update itself using the `INSTALL_IF_UPDATE` IPC command. If an update is available, the option appears in the app.
+    - **Manual reinstall** — download the latest PKG from [pkg-zone.com](https://pkg-zone.com/details/ITEM00001) or the [GitHub releases page](https://github.com/LightningMods/Itemzflow/releases) and install it using your existing homebrew installer.
+
+    The background daemon at `/system/vsh/app/ITEM00002` is updated automatically by Itemzflow the first time you launch a new version. You do not need to update the daemon separately.
+  </Accordion>
+
+  <Accordion title="How do I install game patches?">
+    Game patches are XML files that modify game memory at runtime. To install them:
+
+    1. Obtain a patch file in `.xml` format, named after the game's Title ID (for example, `CUSA00001.xml`).
+    2. Use FTP to upload the file to:
+
+       ```
+       /user/data/GoldHEN/patches/xml/
+       ```
+
+    3. Open Itemzflow, select the game, and enable the patch from within the app.
+
+    For more details on patch format and patch types, see [Game Patches](/features/game-patches).
+  </Accordion>
+
+  <Accordion title="What is the daemon and can I delete it?">
+    The Itemz Daemon is a required background service installed at `/system/vsh/app/ITEM00002`. It handles:
+
+    - Playtime tracking
+    - Home menu redirection
+    - NFS/FUSE mounts
+    - IPC communication with the main app
+
+    **Do not delete the daemon.** Its integrity is hash-checked by the Itemz Loader every time Itemzflow launches. If the daemon is missing or outdated, Itemzflow re-installs it automatically from the PKG. Deleting it manually will cause Itemzflow to reinstall it on the next launch, but may cause errors in the meantime.
+  </Accordion>
+
+  <Accordion title="How do I get custom themes?">
+    You have two options:
+
+    - **Download a pre-made theme** from the [Itemzflow Themes repository](https://github.com/LightningMods/itemzflow-themes).
+    - **Create your own theme** by providing the required files with exact filenames and a valid `theme.ini`. See [Themes](/customization/themes) for the full file list and `theme.ini` format.
+
+    Once you have the theme files, enable themes in your settings:
+
+    ```ini
+    [Settings]
+    Enable_Theme=1
+    ```
+  </Accordion>
+
+  <Accordion title="The app shows 'FATAL Signal' — what do I do?">
+    A "FATAL Signal" message means Itemzflow hit an unrecoverable error. The most common cause is the jailbreak not being active when the app launched.
+
+    **Steps:**
+
+    1. Re-run HEN or GoldHEN, then relaunch Itemzflow.
+    2. If the error persists, collect the log file at:
+
+       ```
+       /user/app/ITEM00001/logs/itemzflow_app.log
+       ```
+
+    3. Share the log in the [Discord](https://discord.gg/GvzDdx9GTc) or attach it to a [GitHub Issue](https://github.com/LightningMods/Itemzflow/issues).
+  </Accordion>
+
+  <Accordion title="Where can I get help?">
+    <CardGroup cols={2}>
+      <Card title="Discord" icon="discord" href="https://discord.gg/GvzDdx9GTc">
+        Join the official Discord server for community support and development updates.
+      </Card>
+      <Card title="GitHub Issues" icon="github" href="https://github.com/LightningMods/Itemzflow/issues">
+        Open a bug report or feature request on GitHub. Include logs when reporting issues.
+      </Card>
+    </CardGroup>
+  </Accordion>
+
+  <Accordion title="How do I support development?">
+    If Itemzflow has been useful to you, consider supporting the developer via Ko-fi:
+
+    [ko-fi.com/lightningmods](https://ko-fi.com/lightningmods)
+  </Accordion>
+</AccordionGroup>

@@ -1,0 +1,59 @@
+---
+title: "Introduction"
+description: "Learn what Itemzflow is and how it works."
+---
+
+Itemzflow is an open-source PS4 homebrew application that replaces the default home menu with a fully-featured game manager. It displays your installed games as a scrollable cover grid, and gives you tools to install packages, dump games, apply patches, mount network shares, and track playtime — all from one app.
+
+<Note>
+  Itemzflow requires a jailbroken PS4. It will not function on stock firmware.
+</Note>
+
+## Three components
+
+Itemzflow is made up of three distinct parts that work together:
+
+| Component | Title ID | Role |
+|---|---|---|
+| Itemz Loader | `ITEM00001` (launcher) | Runs first — loads `jb.prx`, performs the jailbreak, sets up the filesystem, and launches `ItemzCore.self` |
+| Main app (ItemzCore) | `ITEM00001` | The UI you interact with — renders the game grid, handles input, and coordinates all features |
+| Background daemon | `ITEM00002` | A persistent process installed to `/system/vsh/app/ITEM00002` on first launch. Handles playtime tracking, FTP, NFS/FUSE mounts, and home menu redirect |
+
+The daemon is hash-checked by the Itemz Loader every time the app starts to ensure it stays in sync with the installed PKG version. You never need to update or touch the daemon folder manually — Itemzflow manages it for you.
+
+## Key features
+
+<CardGroup cols={2}>
+  <Card title="Game manager" icon="gamepad" href="/features/game-manager">
+    Browse all installed games as a cover grid. Sort by title ID or app name, filter by category, and launch titles directly.
+  </Card>
+  <Card title="PKG installer" icon="box-archive" href="/features/pkg-installer">
+    Install PKG files from USB, local storage, or a remote URL with background download progress shown in the UI.
+  </Card>
+  <Card title="Game dumper" icon="hard-drive" href="/features/game-dumper">
+    Dump base game, patch, or all content to a connected USB drive. Supports the same language as the running system.
+  </Card>
+  <Card title="Game patches" icon="wrench" href="/features/game-patches">
+    Apply XML-based game patches and trainers to any installed title. Patches are managed and updated from within the app.
+  </Card>
+  <Card title="Playtime tracking" icon="clock" href="/features/playtime-tracking">
+    The background daemon records how many minutes you spend in each game and surfaces that data in the UI.
+  </Card>
+  <Card title="FTP & NFS" icon="network-wired" href="/features/ftp-nfs">
+    Access your PS4 filesystem remotely over FTP, or mount a PC NFS share and browse it like local storage.
+  </Card>
+  <Card title="Themes" icon="palette" href="/customization/themes">
+    Swap in community-made themes or build your own with custom button art, background images, fonts, and GLES shaders.
+  </Card>
+  <Card title="Home menu redirect" icon="house" href="/customization/settings">
+    Optionally redirect the PS4 home button to launch Itemzflow instead of the system shell.
+  </Card>
+</CardGroup>
+
+## License
+
+Itemzflow is open source and released under the [GPL-3.0 license](https://github.com/LightningMods/Itemzflow/blob/master/LICENSE). The source code is available on [GitHub](https://github.com/LightningMods/Itemzflow).
+
+## Ready to install?
+
+Follow the [installation guide](/installation) to get Itemzflow running on your PS4.

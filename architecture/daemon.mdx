@@ -1,0 +1,117 @@
+---
+title: "The Itemz daemon"
+description: "The background service that powers home redirect, FTP, NFS, and playtime tracking."
+---
+
+The Itemz daemon (ITEM00002) is a background service that runs independently of the main Itemzflow UI. It handles every feature that needs to keep working while you are inside a game or another application: intercepting the PS button for home redirect, serving files over FTP, mounting NFS shares via FUSE, and recording playtime in a SQLite database.
+
+## Installation
+
+On the first launch of Itemzflow, the daemon is automatically installed to `/system/vsh/app/ITEM00002`. It is **never** updated by the user directly — Itemzflow is the only thing allowed to update the daemon, and the loader verifies a hash of the daemon binary before each launch to confirm it matches the shipped PKG version.
+
+<Note>
+  You should not modify, replace, or manually copy files into `/system/vsh/app/ITEM00002`. The loader's hash check will detect a mismatch and refuse to proceed.
+</Note>
+
+## What the daemon does
+
+<CardGroup cols={2}>
+  <Card title="Home menu redirect" icon="home">
+    Intercepts PS button presses and relaunches Itemzflow (ITEM00001) instead of the system home menu when redirect is enabled.
+  </Card>
+  <Card title="FTP server" icon="folder-open">
+    Runs a built-in FTP server so you can transfer files to and from the PS4 over the network without additional software.
+  </Card>
+  <Card title="NFS/FUSE mounting" icon="hard-drive">
+    Mounts remote NFS shares as a local FUSE filesystem at `/hostapp`, making network storage accessible as if it were on-device.
+  </Card>
+  <Card title="Playtime tracking" icon="clock">
+    Records and queries per-title session start timestamps and total minutes played using a persistent SQLite database.
+  </Card>
+  <Card title="Self-update management" icon="refresh-cw">
+    Handles Itemzflow PKG updates on behalf of the main app — backing up covers, custom names, and settings before installing, then restoring them after.
+  </Card>
+  <Card title="Critical suspend" icon="pause-circle">
+    Exposes a mechanism for the main app to signal a critical suspend state, giving the daemon an opportunity to clean up before the system goes into rest mode.
+  </Card>
+</CardGroup>
+
+## IPC communication
+
+The daemon communicates with the main app over a Unix domain socket at `/system_tmp/IPC_Socket`. The main app uses the `IPC_Client` singleton (from `ipc_client.hpp`) to open the connection and dispatch commands. The daemon's `ipc_client` thread validates the magic number `0xDEADBABE` on every incoming message before dispatching it to `handleIPC`.
+
+```cpp
+// Socket path
+const char IPC_SOC[] = "/system_tmp/IPC_Socket";
+
+// Every message on the wire
+struct IPCMessage {
+    int magic = 0xDEADBABE;
+    IPC_Commands cmd;
+    IPC_Ret error;
+    char msg[0x100];   // 256-byte payload
+};
+```
+
+The socket is created fresh on daemon startup and removed when the daemon shuts down or restarts (`unlink("/system_tmp/IPC_Socket")`).
+
+## IPC commands
+
+| Value | Command | Description |
+|------:|---------|-------------|
+| 1 | `CONNECTION_TEST` | Test whether the daemon is reachable. The daemon replies with `"Connected"` and `NO_ERROR`. |
+| 2 | `ENABLE_HOME_REDIRECT` | Set `is_home_redirect_enabled = true`; the PS button loop will start intercepting. |
+| 3 | `DISABLE_HOME_REDIRECT` | Set `is_home_redirect_enabled = false`; the PS button returns to normal. |
+| 4 | `GAME_GET_MINS` | Pass a Title ID in the message buffer; returns total minutes played as a decimal string. |
+| 5 | `GAME_GET_START_TIME` | Pass a Title ID; returns the Unix timestamp of the last session start as a decimal string. |
+| 6 | `CRITICAL_SUSPEND` | Set the `critical_suspend` flag so the daemon can react to an impending rest-mode transition. |
+| 7 | `INSTALL_IF_UPDATE` | Trigger a PKG install of `/user/app/if_update.pkg`, preserving covers, custom names, and `settings.ini`. |
+| 8 | `RESTART_FTP_SERVICE` | Call `ShutdownFTP()` then `StartFTP()` to restart the built-in FTP server. |
+| 9 | `FUSE_SET_SESSION_IP` | Store the NFS server address (e.g. `nfs://192.168.1.1/share`) for this session. Must be called before `FUSE_START_W_PATH`. |
+| 10 | `FUSE_SET_DEBUG_FLAG` | Enable verbose FUSE logging to `/data/itemzflow_daemon/libfuse.log`. |
+| 11 | `FUSE_START_W_PATH` | Pass a mount point path; starts the FUSE thread using the previously set session IP. |
+| 12 | `RESTART_FUSE_FS` | Send an acknowledgment, then raise `SIGQUIT` to restart the daemon and reinitialise the FUSE filesystem. |
+| 100 | `DEAMON_UPDATE` | Signal the daemon to reboot itself for an update (`reboot_daemon = true`, then `SIGQUIT`). |
+| 1337 | `CMD_SHUTDOWN_DAEMON` | Cleanly shut down the daemon: notify the user, unlink socket files, raise `SIGQUIT`. |
+
+<Note>
+  `MACGUFFIN_CMD` (69) appears in the enum but is commented out in the daemon's `handleIPC` switch. It is not a usable command.
+</Note>
+
+## IPC return codes
+
+| Value | Code | Meaning |
+|------:|------|---------|
+| -1 | `INVALID` | No valid response received, or the command is unrecognised. |
+| 0 | `NO_ERROR` | The command completed successfully. |
+| 1 | `OPERATION_FAILED` | The command ran but the operation failed (e.g. Title ID not found, invalid PID). |
+| 3 | `FUSE_IP_ALREADY_SET` | `FUSE_SET_SESSION_IP` was called but a session IP is already stored. |
+| 4 | `FUSE_IP_NOT_SET` | `FUSE_START_W_PATH` was called before `FUSE_SET_SESSION_IP`. |
+| 5 | `FUSE_FW_NOT_SUPPORTED` | The current firmware version is not supported by the FUSE implementation. |
+| 100 | `DEAMON_UPDATING` | `DEAMON_UPDATE` was sent; the client should close its socket and wait for the daemon to restart. |
+
+## NFS/FUSE mount flow
+
+Mounting a remote NFS share requires three IPC commands in sequence:
+
+<Steps>
+  <Step title="Set the session IP">
+    Send `FUSE_SET_SESSION_IP` with the NFS URL in the message buffer (e.g. `nfs://192.168.1.10/share`). The daemon stores this for the lifetime of the session.
+  </Step>
+  <Step title="Optionally enable debug logging">
+    Send `FUSE_SET_DEBUG_FLAG` to write verbose FUSE output to `/data/itemzflow_daemon/libfuse.log`. Skip this step in normal use.
+  </Step>
+  <Step title="Start the mount">
+    Send `FUSE_START_W_PATH` with the desired mount point (e.g. `/hostapp`). The daemon starts the FUSE thread. On success the session IP is saved to `/data/itemzflow_daemon/fuse_ip.txt` so it can be restored after a daemon restart.
+  </Step>
+</Steps>
+
+## Log files
+
+| Log | Path |
+|-----|------|
+| Daemon main log | `/data/itemzflow_daemon/daemon.log` |
+| libfuse log | `/data/itemzflow_daemon/libfuse.log` |
+| USB fallback (crash/failure) | `/mnt/usb<N>/itemzflow/daemon.log` |
+
+If the daemon is crashing or failing to start, check `daemon.log` first. If a FUSE mount is failing, check `libfuse.log` — enabling `FUSE_SET_DEBUG_FLAG` before mounting will produce much more detailed output there.

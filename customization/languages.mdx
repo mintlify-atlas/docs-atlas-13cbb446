@@ -1,0 +1,45 @@
+---
+title: "Languages"
+description: "Itemzflow supports multiple languages following your PS4 system language setting."
+---
+
+Itemzflow automatically uses the language configured in your PS4's system settings — there is no separate language option inside the app itself.
+
+<Note>
+  The language is read from **System Settings > Language** on your PS4. Changing the language inside Itemzflow is not possible; update it in the PS4 system settings instead.
+</Note>
+
+## How it works
+
+When Itemzflow launches, it reads the active system language from the PS4 and loads the matching translation file. If your language is not yet supported, Itemzflow falls back to English automatically.
+
+## Available translations
+
+Supported languages are maintained in the [Itemzflow Languages repository](https://github.com/LightningMods/Itemzflow-Languages) on GitHub. Check that repository for the current list of available translations — new languages are added over time by community contributors.
+
+## Contributing a translation
+
+If your language is not supported, you can add it by contributing to the Languages repository.
+
+<Steps>
+  <Step title="Fork the Languages repository">
+    Go to [github.com/LightningMods/Itemzflow-Languages](https://github.com/LightningMods/Itemzflow-Languages) and fork the repository.
+  </Step>
+  <Step title="Create a translation file">
+    Copy an existing translation file and translate each string into your language. Follow the naming convention used by the other files in the repository.
+  </Step>
+  <Step title="Open a pull request">
+    Submit your translation as a pull request to the main repository for review.
+  </Step>
+</Steps>
+
+## Non-Latin scripts and custom fonts
+
+If your language uses a non-Latin script (such as Arabic, Japanese, Chinese, or Korean), the embedded font may not include the required glyphs. Use the `TTF_Font` setting in `settings.ini` to point Itemzflow at a TTF font file that covers your script.
+
+```ini
+[Settings]
+TTF_Font=/mnt/usb0/myfont.ttf
+```
+
+See [Settings](/customization/settings) for the full settings reference.

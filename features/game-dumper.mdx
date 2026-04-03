@@ -1,0 +1,73 @@
+---
+title: "Game Dumper"
+description: "Dump your PS4 games to USB for backup purposes."
+---
+
+The game dumper lets you copy an installed PS4 game from internal storage to a USB drive. It is built on the [dumper-testing](https://github.com/Al-Azif/dumper-testing) library by AlAzif.
+
+<Warning>
+  Slow or stalled dumps are caused by factors on your side — USB drive speed, drive health, or incomplete game installation. Do not open a bug report for a slow or stuck dump. Instead, check the log files listed below.
+</Warning>
+
+## Triggering a dump
+
+<Steps>
+  <Step title="Highlight the game">
+    Navigate to the game you want to dump in the Itemzflow grid.
+  </Step>
+  <Step title="Open the options menu">
+    Press **Triangle** to open the per-game options menu.
+  </Step>
+  <Step title="Select Dump">
+    Choose the dump option. Itemzflow reads the `Dumper_option` setting and begins copying immediately.
+  </Step>
+</Steps>
+
+## Dump options
+
+Set the `Dumper_option` key in `settings.ini` to control what gets dumped:
+
+| Value | What is dumped |
+|---|---|
+| `0` | ALL — base game, patch, and DLC |
+| `1` | Base game only |
+| `2` | Patch only |
+
+```ini
+[Settings]
+Dumper_option=0
+```
+
+## Dump destination
+
+The dumper always writes to the first USB drive it finds. By default this is `USB0`. You can change the destination path with the `Dumper_Path` key:
+
+```ini
+[Settings]
+Dumper_Path=/mnt/usb0
+```
+
+<Note>
+  Even if you set a different path, the dumper searches for a connected USB device and uses that as the output root. Make sure a USB drive is inserted before starting a dump.
+</Note>
+
+## Pre-dump checklist
+
+Before starting a dump, verify the following:
+
+- **Both discs are inserted** (for disc-based games split across two discs)
+- **All languages are installed** — the dumper tries to match Itemzflow's own language setting, and missing language packs will cause it to stall on those files
+- The USB drive has enough free space for the game content being dumped
+
+## Log files
+
+| Situation | Log path |
+|---|---|
+| Normal dumper output | `/user/app/ITEM00001/logs/if_dumper.log` |
+| Crash or failure (written to USB) | `/mnt/usb<N>/itemzflow/dumper.log` |
+
+If your dump fails, provide the log from `/user/app/ITEM00001/logs/if_dumper.log` when reporting the issue on Discord or GitHub.
+
+## PS5 game compatibility
+
+Some PS5-format titles (PPSA) can be dumped and used on PS5. A community-maintained compatibility list is available in [this Google Sheet](https://docs.google.com/spreadsheets/d/1TjOeFVNDR19ypTY2If099YOmllBaNsk4/edit?usp=sharing).

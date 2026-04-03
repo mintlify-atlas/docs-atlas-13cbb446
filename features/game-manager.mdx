@@ -1,0 +1,84 @@
+---
+title: "Game Manager"
+description: "Browse, launch, and manage your PS4 game library."
+---
+
+The game manager is Itemzflow's main view. It displays every installed game and app as a scrollable grid with cover art, and gives you access to sorting, filtering, favorites, and launch controls from a single screen.
+
+## How the library is loaded
+
+Itemzflow reads game data directly from the PS4's system SQLite database at `/system_data/priv/mms/app.db`. It queries the `tbl_appbrowse_0<userID>` table for each registered user to retrieve title IDs, display names, and metadata. Cover art images are loaded from `/user/appmeta/<TitleID>/icon0.png`.
+
+The database is opened read-write so Itemzflow can also write back changes — such as renaming a title or fixing missing entries for games on external storage.
+
+## Navigating the grid
+
+Use the left analog stick or D-Pad to move the selection cursor across the grid. Cover art for each game is displayed as a tile; the selected tile scales up and shows the game's name below it.
+
+| Button | Action |
+|---|---|
+| D-Pad / Left stick | Move selection |
+| **Cross** | Launch the selected game |
+| **Triangle** | Open the options menu for the selected game |
+| **Square** | Extra actions (e.g. rename, hide/show) |
+| **Circle** | Go back / close the current menu |
+| **L1 / R1** | Page left / right through the grid |
+
+## Sorting
+
+You control sort order with the `Sort_By` key in `settings.ini`:
+
+| Value | Sort order |
+|---|---|
+| `-1` | No sorting (system default order) |
+| `0` | Alphabetical by Title ID (e.g. CUSA00001) |
+| `1` | Alphabetical by app name |
+
+```ini
+[Settings]
+Sort_By=1
+```
+
+## Filtering by category
+
+The `Sort_Cat` key lets you filter which apps are shown:
+
+```ini
+[Settings]
+Sort_Cat=0
+```
+
+Available categories include all games, retail games, fake PKGs (homebrews), and favorites. You can also change the active filter from within the app without editing the INI file.
+
+## Favorites
+
+The favorites system is managed by the `Favorites` class (`feature_classes.hpp`). A favorite is stored by its Title ID in an unordered set that persists to a plain-text file — one Title ID per line.
+
+**To add a game to favorites:**
+
+<Steps>
+  <Step title="Highlight the game">
+    Navigate to the game you want to favorite in the grid.
+  </Step>
+  <Step title="Open the options menu">
+    Press **Triangle** to open the per-game options menu.
+  </Step>
+  <Step title="Select Favorite">
+    Choose the favorites option. The game is immediately written to the favorites file and the `FILTER_FAVORITES` category will include it on the next filter refresh.
+  </Step>
+</Steps>
+
+To remove a game from favorites, open the same options menu and deselect it. The Title ID is removed from the set and the file is rewritten.
+
+## Home redirect
+
+When `HomeMenu_Redirection=1` is set in `settings.ini`, Itemzflow instructs the daemon to intercept the PS4 home button press. Instead of returning to the PS4 system shell, the console returns to Itemzflow. The daemon handles this via the `ENABLE_HOME_REDIRECT` / `DISABLE_HOME_REDIRECT` IPC commands.
+
+```ini
+[Settings]
+HomeMenu_Redirection=1
+```
+
+<Note>
+  Home redirect is toggled at the daemon level. If you disable it from within the app, it sends the `DISABLE_HOME_REDIRECT` IPC command, and the setting takes effect immediately without a restart.
+</Note>

@@ -1,0 +1,103 @@
+---
+title: "FTP & Network Share"
+description: "Access your PS4 remotely via FTP or mount a PC network share via NFS."
+---
+
+The Itemzflow daemon provides two network filesystem features: a built-in FTP server for remote access to the PS4's filesystem, and an NFS client (via FUSE) for mounting a share from a PC on your local network.
+
+## FTP server
+
+The daemon includes a built-in FTP server based on [FTPS4](https://github.com/xerpi/FTPS4). It starts automatically with the daemon and exposes the PS4 filesystem to any FTP client on the same network.
+
+### Connecting
+
+1. Find your PS4's IP address in **Settings → Network → View Connection Status**.
+2. Open any FTP client (FileZilla, WinSCP, Cyberduck, etc.).
+3. Connect to the PS4's IP address on port **21** with no credentials.
+
+### Common uses
+
+- Upload game patch XML files to `/user/data/GoldHEN/patches/xml/`
+- Install custom themes by uploading files to the Itemzflow app directory
+- Copy custom fonts or background images referenced by `settings.ini`
+- Retrieve log files for troubleshooting
+
+### Restarting the FTP service
+
+If the FTP server becomes unresponsive, you can restart it without rebooting by sending the `RESTART_FTP_SERVICE` IPC command. Itemzflow exposes this in the settings menu. The daemon calls `ShutdownFTP()` followed by `StartFTP()` in response.
+
+## NFS network share (FUSE)
+
+Itemzflow can mount a PC network share over NFS using a userland FUSE implementation. Once mounted, the share appears at `/hostapp` on the PS4, so you can launch content stored on your PC as if it were local.
+
+<Note>
+  The NFS share always mounts at `/hostapp` on the PS4. Make sure you configure your NFS export to allow connections from your PS4's IP address.
+</Note>
+
+### NFS URL format
+
+```
+nfs://PC_IP/share_name
+```
+
+If your exported share path is `/` (the root), you can use the short form:
+
+```
+PC_IP
+```
+
+Examples:
+
+```
+nfs://192.168.1.10/ps4_games
+192.168.1.10
+```
+
+### Configuring the NFS share
+
+<Tabs>
+  <Tab title="Via settings.ini">
+    Set the `Fuse_IP` key in `settings.ini` before launching Itemzflow:
+
+    ```ini
+    [Settings]
+    Fuse_IP=nfs://192.168.1.10/ps4_games
+    ```
+
+    The daemon reads `fuse_ip.txt` at startup and mounts the share automatically if the key is present.
+  </Tab>
+  <Tab title="Via in-app keyboard">
+    Open the NFS settings screen inside Itemzflow and type the NFS URL using the on-screen keyboard. Itemzflow sends the IP/path to the daemon via IPC without requiring a restart.
+  </Tab>
+</Tabs>
+
+### IPC commands for NFS
+
+| Command | Description |
+|---|---|
+| `FUSE_SET_SESSION_IP` | Sends the NFS URL to the daemon and stores it for the current session |
+| `FUSE_START_W_PATH` | Tells the daemon to mount the NFS share at the specified mountpoint (`/hostapp`) |
+| `RESTART_FUSE_FS` | Restarts the daemon (and the FUSE session) — use this if the share becomes unresponsive |
+| `FUSE_SET_DEBUG_FLAG` | Enables verbose FUSE logging to `/data/itemzflow_daemon/libfuse.log` for troubleshooting |
+
+### Mounting sequence
+
+<Steps>
+  <Step title="Set the NFS URL">
+    Itemzflow sends `FUSE_SET_SESSION_IP` with the NFS URL string. The daemon stores it in `fuse_session_ip`.
+  </Step>
+  <Step title="Start the mount">
+    Itemzflow sends `FUSE_START_W_PATH` with `/hostapp` as the mountpoint. The daemon calls `initialize_userland_fuse("/hostapp", fuse_session_ip)` and displays a notification when it succeeds.
+  </Step>
+  <Step title="Access the share">
+    The share is now available at `/hostapp` on the PS4. Itemzflow saves the NFS URL to `fuse_ip.txt` so the daemon can remount it automatically on the next boot.
+  </Step>
+</Steps>
+
+### Debugging NFS issues
+
+If the mount fails or the share is unreachable, enable debug logging:
+
+1. Use the `FUSE_SET_DEBUG_FLAG` IPC command (available from the Itemzflow network settings menu).
+2. Retry the mount.
+3. Retrieve the log from `/data/itemzflow_daemon/libfuse.log` via FTP.

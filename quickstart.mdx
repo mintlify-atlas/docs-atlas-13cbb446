@@ -1,80 +1,112 @@
 ---
-title: "Quickstart"
-description: "Start building awesome documentation in minutes"
+title: "Quick start"
+description: "Get up and running with Itemzflow in minutes."
 ---
 
-## Get started in three steps
+This guide walks you through the core Itemzflow workflow: launching the app, navigating the game grid, setting a dump path, and optionally enabling the home menu redirect.
 
-Get your documentation site running locally and make your first customization.
+<Steps>
+  <Step title="Launch Itemzflow">
+    Open Itemzflow from your PS4 app library. The app initializes its internal services, runs the loader PRX to apply the jailbreak, and then renders the game grid.
 
-### Step 1: Set up your local environment
+    Game covers download automatically in the background on first launch. If your library is large, covers may take a moment to appear — the grid is usable immediately while they load.
 
-<AccordionGroup>
-  <Accordion icon="copy" title="Clone your docs locally">
-    During the onboarding process, you created a GitHub repository with your docs content if you didn't already have one. You can find a link to this repository in your [dashboard](https://dashboard.mintlify.com).
-    
-    To clone the repository locally so that you can make and preview changes to your docs, follow the [Cloning a repository](https://docs.github.com/en/repositories/creating-and-managing-repositories/cloning-a-repository) guide in the GitHub docs.
-  </Accordion>
-  <Accordion icon="rectangle-terminal" title="Start the preview server">
-    1. Install the Mintlify CLI: `npm i -g mint`
-    2. Navigate to your docs directory and run: `mint dev`
-    3. Open `http://localhost:3000` to see your docs live!
-    
-    <Tip>Your preview updates automatically as you edit files.</Tip>
-  </Accordion>
-</AccordionGroup>
+    <Tip>
+      If covers are not downloading, make sure your PS4 has internet access and that your DNS is not blocking external requests.
+    </Tip>
+  </Step>
 
-### Step 2: Deploy your changes
+  <Step title="Navigate the game grid">
+    Use the **left analog stick** or **D-Pad** to move through your installed games. The grid scrolls horizontally and wraps between rows.
 
-<AccordionGroup>
-  <Accordion icon="github" title="Install our GitHub app">
-    Install the Mintlify GitHub app from your [dashboard](https://dashboard.mintlify.com/settings/organization/github-app).
-    
-    Our GitHub app automatically deploys your changes to your docs site, so you don't need to manage deployments yourself.
-</Accordion>
-<Accordion icon="palette" title="Update your site name and colors">
-    For a first change, let's update the name and colors of your docs site.
+    | Button | Action |
+    |---|---|
+    | **Cross** | Launch the selected game |
+    | **Triangle** | Open the options menu for the selected game |
+    | **Circle** | Go back / close the current menu |
+    | **Square** | Additional actions (varies by context) |
+    | **Options** | Open the Itemzflow settings menu |
+    | **L1 / R1** | Scroll between pages or categories |
 
-    1. Open `docs.json` in your editor.
-    2. Change the `"name"` field to your project name.
-    3. Update the `"colors"` to match your brand.
-    4. Save and see your changes instantly at `http://localhost:3000`.
+    The app idles after 15 minutes of no input and dims the display. Press any button or touch the touchpad to wake it.
+  </Step>
 
-    <Tip>Try changing the primary color to see an immediate difference!</Tip>
-  </Accordion>
-</AccordionGroup>
+  <Step title="Configure settings.ini">
+    Itemzflow reads a `settings.ini` file either from the app directory or from the root of your USB drive (`/mnt/usb0/`). Creating this file lets you set a dump path, sort order, background music, and more without opening the in-app settings menu each time.
 
-### Step 3: Go live
+    <Tabs>
+      <Tab title="Example settings.ini">
+        ```ini
+        [Settings]
+        Dumper_option=0
+        Sort_By=-1
+        Sort_Cat=0
+        cover_message=1
+        MP3_Path=/mnt/usb0/music
+        Dumper_Path=/mnt/usb0
+        TTF_Font=/mnt/usb0/myfont.ttf
+        Show_Buttons=1
+        Enable_Theme=1
+        Image_path=/mnt/usb0/pic.png
+        Reflections=1
+        HomeMenu_Redirection=1
+        Daemon_on_start=0
+        Show_install_prog=1
+        Fuse_IP=nfs://192.1.2.3/nfs_share
+        ```
+      </Tab>
+      <Tab title="Key options explained">
+        | Key | Values | Description |
+        |---|---|---|
+        | `Dumper_option` | `0` = all, `1` = base only, `2` = patch only | Controls what the dumper exports |
+        | `Sort_By` | `-1` = none, `0` = title ID, `1` = app name | Alphabetical sort order for the game grid |
+        | `Dumper_Path` | Any valid FS path | Where dumped games are written — set this to your USB mount point |
+        | `MP3_Path` | Path to folder or single `.mp3` | Background music played on loop while the app is open |
+        | `HomeMenu_Redirection` | `0` or `1` | When `1`, pressing the home button on the controller opens Itemzflow instead of the system shell |
+        | `Reflections` | `0` or `1` | Enables cover art reflections in the game grid |
+        | `Show_install_prog` | `0` or `1` | Shows a PKG installation progress indicator in the UI |
+        | `Fuse_IP` | `nfs://IP/share_name` | NFS share address to mount from a PC on your local network |
+        | `Daemon_on_start` | `0` or `1` | Set to `1` to prevent the daemon from connecting automatically on launch |
+      </Tab>
+    </Tabs>
 
-<Accordion icon="rocket" title="Publish your docs">
-  1. Commit and push your changes.
-  2. Your docs will update and be live in moments!
-</Accordion>
+    Place the file at `/mnt/usb0/settings.ini` on your USB drive, or use FTP to upload it to `/user/app/ITEM00001/settings.ini`. The app picks up the USB path first if both exist.
 
-## Next steps
+    For the full settings reference, see [Settings](/customization/settings).
+  </Step>
 
-Now that you have your docs running, explore these key features:
+  <Step title="Set a dump path">
+    If you plan to dump games to USB, set `Dumper_Path` in your `settings.ini` to your USB mount point:
 
-<CardGroup cols={2}>
+    ```ini
+    Dumper_Path=/mnt/usb0
+    ```
 
-<Card title="Write Content" icon="pen-to-square" href="/essentials/markdown">
-  Learn MDX syntax and start writing your documentation.
-</Card>
+    The dumper always writes to the first USB drive it detects (typically `usb0`). Make sure the drive is connected and mounted before starting a dump.
 
-<Card title="Customize style" icon="palette" href="/essentials/settings">
-  Make your docs match your brand perfectly.
-</Card>
+    <Note>
+      If your game has multiple discs or optional language packs, install **all discs and all languages** before dumping. The dumper will get stuck on any file that is not fully installed.
+    </Note>
+  </Step>
 
-<Card title="Add code examples" icon="square-code" href="/essentials/code">
-  Include syntax-highlighted code blocks.
-</Card>
+  <Step title="Enable home menu redirect (optional)">
+    Itemzflow can intercept the PS4 home button and use itself as the shell. To enable this, set `HomeMenu_Redirection=1` in your `settings.ini`, or toggle it from within the app:
 
-<Card title="API documentation" icon="code" href="/api-reference/introduction">
-  Auto-generate API docs from OpenAPI specs.
-</Card>
+    1. Press **Options** to open the settings menu.
+    2. Navigate to the **Home Redirection** toggle.
+    3. Enable it.
 
-</CardGroup>
+    After enabling, pressing the PS button on your controller opens Itemzflow instead of the system home menu. You can disable this at any time from the same settings screen.
 
-<Note>
-  **Need help?** See our [full documentation](https://mintlify.com/docs) or join our [community](https://mintlify.com/community).
-</Note>
+    <Warning>
+      Home redirection requires the background daemon (`ITEM00002`) to be running. If the daemon is not connected, the redirect will not take effect.
+    </Warning>
+  </Step>
+</Steps>
+
+## What's next?
+
+- [Settings reference](/customization/settings) — all `settings.ini` keys and their accepted values
+- [Themes](/customization/themes) — install community themes or create your own
+- [Game dumper](/features/game-dumper) — detailed dumping instructions and supported formats
+- [Troubleshooting](/troubleshooting/logs) — where to find logs and how to report issues

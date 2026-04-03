@@ -1,0 +1,92 @@
+{
+  "projectType": "general",
+  "projectName": "Itemzflow",
+  "projectDescription": "A PS4 homebrew game manager and home menu alternative with PKG installation, game dumping, NFS/FTP support, custom themes, game patches, and playtime tracking.",
+  "theme": "aspen",
+  "primaryColor": "#7c7c7c",
+  "lightColor": "#0a0a0a",
+  "darkColor": "#c7c7c7",
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Documentation",
+        "groups": [
+          {
+            "group": "Get Started",
+            "pages": [
+              "introduction",
+              "installation",
+              "quickstart"
+            ]
+          },
+          {
+            "group": "Features",
+            "pages": [
+              "features/game-manager",
+              "features/pkg-installer",
+              "features/game-dumper",
+              "features/game-patches",
+              "features/playtime-tracking",
+              "features/ftp-nfs"
+            ]
+          },
+          {
+            "group": "Customization",
+            "pages": [
+              "customization/settings",
+              "customization/themes",
+              "customization/languages"
+            ]
+          },
+          {
+            "group": "Architecture",
+            "pages": [
+              "architecture/overview",
+              "architecture/daemon",
+              "architecture/loader"
+            ]
+          },
+          {
+            "group": "Troubleshooting",
+            "pages": [
+              "troubleshooting/logs",
+              "troubleshooting/common-issues",
+              "troubleshooting/faq"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "keyFeatures": [
+    "PS4 game library browser and manager with cover art",
+    "PKG package installer with background download support",
+    "Full game dumper to USB with multi-disc and patch support",
+    "Game patches and trainers via XML patch files",
+    "Playtime tracking per game with daemon IPC",
+    "FTP server built into the daemon for remote file management",
+    "NFS network share mounting via FUSE",
+    "Custom themes with backgrounds, fonts, and GLES2 shaders",
+    "Home menu redirect (replaces default PS4 home screen)",
+    "Multi-language support following PS4 system language",
+    "Favorites list and sorting/filtering of installed games",
+    "Game saves management",
+    "MP3 background music playback"
+  ],
+  "publicApiSurface": [
+    "IPC_Commands::ENABLE_HOME_REDIRECT",
+    "IPC_Commands::DISABLE_HOME_REDIRECT",
+    "IPC_Commands::GAME_GET_MINS",
+    "IPC_Commands::GAME_GET_START_TIME",
+    "IPC_Commands::INSTALL_IF_UPDATE",
+    "IPC_Commands::RESTART_FTP_SERVICE",
+    "IPC_Commands::FUSE_SET_SESSION_IP",
+    "IPC_Commands::FUSE_START_W_PATH",
+    "IPC_Commands::RESTART_FUSE_FS",
+    "pkginstall(fullpath, filename, Show_install_prog, delete_pkg_after)",
+    "installPatchPKG(url, title_id, icon_path)",
+    "sceAppInstUtilAppInstallPkg(file_path, reserved)",
+    "sceAppInstUtilAppUnInstall(title_id)",
+    "setting.ini configuration keys (Dumper_option, Sort_By, MP3_Path, etc.)"
+  ]
+}

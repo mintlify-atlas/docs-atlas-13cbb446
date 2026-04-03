@@ -1,0 +1,106 @@
+---
+title: "Architecture overview"
+description: "How Itemzflow's three components work together."
+---
+
+Itemzflow is split into three distinct components that each handle a specific layer of responsibility: a loader PRX that performs the jailbreak, a background daemon that provides persistent services, and the main app that you interact with. Understanding how they fit together explains why certain behaviors — like home redirect and playtime tracking — work even while you are inside another application.
+
+## Components
+
+<CardGroup cols={3}>
+  <Card title="Itemz Loader" icon="key">
+    A separate launcher app bundled in the PKG. Runs first: loads `jb.prx`, performs the jailbreak via `jbc_run_as_root`, sets up the filesystem, and launches `ItemzCore.self`.
+  </Card>
+  <Card title="ItemzCore (ITEM00001)" icon="layout-dashboard">
+    The main UI and game manager. Handles the game grid, PKG installation, game dumping, patches, saves, theming, and IPC communication with the daemon.
+  </Card>
+  <Card title="Daemon (ITEM00002)" icon="server">
+    A background service installed at `/system/vsh/app/ITEM00002`. Provides FTP, NFS/FUSE mounting, playtime tracking, and home menu redirect independent of the main app's lifecycle.
+  </Card>
+</CardGroup>
+
+## How the components relate
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│  PS4 system                                                 │
+│                                                             │
+│   ┌──────────────────────────────────────────────────────┐  │
+│   │  Itemz Loader (eboot.bin inside ITEM00001)           │  │
+│   │                                                      │  │
+│   │  1. Loads /app0/Media/jb.prx                        │  │
+│   │  2. Resolves jbc_run_as_root                        │  │
+│   │  3. jbc_run_as_root() ──► jailbreak complete        │  │
+│   │  4. Sets up FS, creates settings.ini, starts daemon │  │
+│   │  5. sceSystemServiceLoadExec(ItemzCore.self) ──────┐│  │
+│   └─────────────────────────────────────────────────── ││  │
+│                                                         ││  │
+│   ┌─────────────────────────────────────────────────────┘│  │
+│   │  ItemzCore.self (main Itemzflow UI)                  │  │
+│   │                                                      │  │
+│   │  • Game grid + cover art  • PKG installer            │  │
+│   │  • Game dumper            • Patches / saves          │  │
+│   │                                                      │  │
+│   │  IPC_Client ──────────── Unix socket ─────────────┐ │  │
+│   └───────────────────────────────────────────────────┼─┘  │
+│                                                        │    │
+│            /system_tmp/IPC_Socket                      │    │
+│                                                        │    │
+│   ┌────────────────────────────────────────────────────┘    │
+│   │  ITEM00002 (daemon)                                      │
+│   │                                                          │
+│   │  • FTP server            • Home menu redirect            │
+│   │  • NFS/FUSE mounts       • Playtime database             │
+│   │  • Self-update manager   • PS button interception        │
+│   └──────────────────────────────────────────────────────┘  │
+└─────────────────────────────────────────────────────────────┘
+```
+
+## Startup sequence
+
+<Steps>
+  <Step title="Loader runs jb.prx">
+    When ITEM00001 launches, the Itemz Loader runs first. It loads `/app0/Media/jb.prx`, resolves the `jbc_run_as_root` symbol, and calls it to perform the jailbreak. If the PRX cannot be loaded or the symbol is missing, the loader displays a fatal error and exits.
+  </Step>
+  <Step title="Loader sets up the environment">
+    With root privileges, the loader mounts `/system_ex`, creates required directories (including `/user/app/ITEM00001/logs/`), creates a default `settings.ini` if one does not exist, and starts daemon services.
+  </Step>
+  <Step title="ItemzCore.self launches">
+    The loader calls `sceSystemServiceLoadExec("/app0/ItemzCore.self", 0)` to start the main Itemzflow app. ItemzCore loads its own PRX (`jb.prx`) again to resolve `jailbreak_me` and `rejail_multi` for re-jailbreak support, initialises GLES2, and spawns its utility and playtime threads.
+  </Step>
+  <Step title="Daemon auto-connects">
+    On the very first launch, Itemzflow installs the daemon to `/system/vsh/app/ITEM00002`. On subsequent launches, if `Daemon_on_start` is not disabled in `settings.ini`, the main app opens a connection to the daemon's Unix socket at `/system_tmp/IPC_Socket` automatically.
+  </Step>
+  <Step title="Services become available">
+    Once the IPC connection is established, the main app can query playtime, toggle home redirect, control the FTP server, and mount NFS shares — all via the daemon.
+  </Step>
+</Steps>
+
+## IPC message structure
+
+All communication between the main app and the daemon travels over a Unix domain socket at `/system_tmp/IPC_Socket`. Every message is a fixed-size `IPCMessage` struct:
+
+```cpp
+struct IPCMessage {
+    int magic = 0xDEADBABE;   // Magic number — invalid messages are dropped
+    IPC_Commands cmd;          // Which operation to perform
+    IPC_Ret error;             // Return code set by the daemon on response
+    char msg[0x100];           // 256-byte payload buffer (Title ID, IP, etc.)
+};
+```
+
+The daemon's `ipc_client` loop validates the magic number before dispatching any command. Messages with a mismatched magic are logged as errors and discarded.
+
+## Hash-checked updates
+
+The loader verifies a hash of the installed daemon before launching the app. This ensures the daemon binary is always the version that was shipped with the current PKG, preventing a stale or mismatched daemon from being used. The daemon is only ever updated by Itemzflow itself — never by the user manually.
+
+## Log file locations
+
+| Component        | PS4 path                                        | USB path (crash/failure only)              |
+|------------------|-------------------------------------------------|--------------------------------------------|
+| Main app         | `/user/app/ITEM00001/logs/itemzflow_app.log`    | `/mnt/usb<N>/itemzflow/crash.log`          |
+| Loader           | `/user/app/ITEM00001/logs/loader.log`           | `/mnt/usb<N>/itemzflow/loader.log`         |
+| Daemon           | `/data/itemzflow_daemon/daemon.log`             | `/mnt/usb<N>/itemzflow/daemon.log`         |
+| libfuse          | `/data/itemzflow_daemon/libfuse.log`            | —                                          |
+| Dumper           | `/user/app/ITEM00001/logs/if_dumper.log`        | `/mnt/usb<N>/itemzflow/dumper.log`         |

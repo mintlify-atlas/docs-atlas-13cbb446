@@ -1,0 +1,115 @@
+---
+title: "PKG Installer"
+description: "Install PKG packages from USB, local storage, or remote URLs."
+---
+
+Itemzflow supports two methods for installing PKG files: directly from a local path (USB drive or internal storage) and via a background download from a remote URL. Both methods use official PS4 system APIs.
+
+<Warning>
+  Only install PKG files from sources you trust. Installing modified or unsigned packages can corrupt your game library or system state.
+</Warning>
+
+## Local PKG installation
+
+For PKGs already on your PS4 (USB drive or internal storage), Itemzflow calls `sceAppInstUtilAppInstallPkg`:
+
+```c
+int sceAppInstUtilAppInstallPkg(const char* file_path, void* reserved);
+```
+
+Pass the full path to the PKG file (for example, `/mnt/usb0/game.pkg`). The `reserved` parameter is unused and should be `NULL`. The function blocks until the installation completes or fails.
+
+To uninstall a title by Title ID, use:
+
+```c
+int sceAppInstUtilAppUnInstall(const char* title_id);
+```
+
+### Install progress notifications
+
+When `Show_install_prog=1` is set in `settings.ini`, Itemzflow displays an on-screen notification showing install progress as each PKG is processed.
+
+```ini
+[Settings]
+Show_install_prog=1
+```
+
+## Remote URL installation (BGFT)
+
+For PKGs hosted at a remote URL, Itemzflow uses the PS4's Background File Transfer (BGFT) service. The main descriptor struct is `bgft_download_param`:
+
+```c
+struct bgft_download_param {
+    int user_id;           // PS4 user ID to associate the install with
+    int entitlement_type;  // entitlement type (0 for standard)
+    const char* id;        // unique task identifier string
+    const char* content_url;     // full URL of the PKG to download
+    const char* content_ex_url;  // secondary URL (usually NULL)
+    const char* content_name;    // display name shown during download
+    const char* icon_path;       // path to a PNG for the notification icon
+    const char* sku_id;          // SKU ID (usually NULL for homebrew)
+    enum bgft_task_option_t option;     // bitfield of task option flags
+    const char* playgo_scenario_id;     // PlayGo scenario (usually NULL)
+    const char* release_date;           // release date string (usually NULL)
+    const char* package_type;           // package type string
+    const char* package_sub_type;       // package sub-type string
+    unsigned long package_size;         // total size of the PKG in bytes
+};
+```
+
+### Task option flags
+
+The `option` field is a bitfield built from the `bgft_task_option_t` enum:
+
+| Flag | Value | Meaning |
+|---|---|---|
+| `BGFT_TASK_OPTION_NONE` | `0x0` | No special behaviour |
+| `BGFT_TASK_OPTION_DELETE_AFTER_UPLOAD` | `0x1` | Delete the PKG from the source after installation completes |
+| `BGFT_TASK_OPTION_INVISIBLE` | `0x2` | Hide the task from the PS4 download notification list |
+| `BGFT_TASK_OPTION_ENABLE_PLAYGO` | `0x4` | Enable PlayGo streaming during install |
+| `BGFT_TASK_OPTION_FORCE_UPDATE` | `0x8` | Force install even if the same version is already present |
+| `BGFT_TASK_OPTION_REMOTE` | `0x10` | Mark the source as remote (used for URL downloads) |
+| `BGFT_TASK_OPTION_COPY_CRASH_REPORT_FILES` | `0x20` | Copy crash report files after install |
+| `BGFT_TASK_OPTION_DISABLE_INSERT_POPUP` | `0x40` | Suppress the disc-insert popup during install |
+| `BGFT_TASK_OPTION_DISABLE_CDN_QUERY_PARAM` | `0x10000` | Strip CDN query parameters from the download URL |
+
+You can combine flags with bitwise OR. For a typical remote homebrew install:
+
+```c
+.option = BGFT_TASK_OPTION_REMOTE | BGFT_TASK_OPTION_FORCE_UPDATE
+```
+
+### Registering and starting a task
+
+<Steps>
+  <Step title="Initialise BGFT">
+    Call `sceBgftServiceInit` with a heap buffer (Itemzflow allocates 1 MB) before registering any tasks.
+  </Step>
+  <Step title="Register the task">
+    Call `sceBgftServiceIntDebugDownloadRegisterPkg` (or `sceBgftServiceDownloadRegisterTask`) with a pointer to your `bgft_download_param_ex` struct and a pointer to receive the task ID.
+  </Step>
+  <Step title="Start the task">
+    Call `sceBgftServiceDownloadStartTask(task_id)` to begin the download.
+  </Step>
+  <Step title="Poll progress">
+    Call `sceBgftServiceDownloadGetProgress(task_id, &progress)` in a loop to read the `SceBgftTaskProgress` struct.
+  </Step>
+</Steps>
+
+### Tracking download progress
+
+The `bgft_download_task_progress_info` struct contains the fields you need to display progress to the user:
+
+| Field | Type | Description |
+|---|---|---|
+| `transferred` | `unsigned long` | Bytes downloaded so far |
+| `length` | `unsigned long` | Total bytes for the current file |
+| `transferred_total` | `unsigned long` | Bytes downloaded across all files in the task |
+| `length_total` | `unsigned long` | Total bytes across all files in the task |
+| `rest_sec` | `unsigned int` | Estimated seconds remaining for the current file |
+| `rest_sec_total` | `unsigned int` | Estimated seconds remaining for the whole task |
+| `num_index` | `unsigned int` | Index of the current file being downloaded |
+| `num_total` | `unsigned int` | Total number of files in the task |
+| `preparing_percent` | `int` | Preparation progress (0–100), used before the download begins |
+| `local_copy_percent` | `int` | Local copy progress (0–100), used after download completes |
+| `error_result` | `int` | Non-zero if the task encountered an error |

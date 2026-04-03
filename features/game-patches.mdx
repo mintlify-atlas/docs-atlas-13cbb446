@@ -1,0 +1,144 @@
+---
+title: "Game Patches"
+description: "Apply XML-based game patches and trainers to modify game behavior."
+---
+
+Itemzflow includes a built-in patch engine that applies XML-based memory patches and trainers to PS4 games at runtime. Patches are managed by the GoldHEN patch system and stored per Title ID.
+
+## How the patch engine works
+
+When you launch a game, the patch engine reads the XML patch file for that Title ID from disk. Each `<Line>` element describes a memory address and the value to write there. The engine supports multiple data types — from single bytes to UTF-16 strings — so patches can cover a wide range of game modifications including cheats, trainers, and bug fixes.
+
+Each patch entry has its own enabled/disabled state stored as a small text file under `/data/GoldHEN/patches/settings/`. The filename is a DJB2 hash of the patch metadata (title, name, app version, Title ID, and ELF name), so enabling or disabling a patch does not modify the XML file itself.
+
+## Storage path
+
+Patch files live at:
+
+```
+/user/data/GoldHEN/patches/xml/<TitleID>.xml
+```
+
+For example:
+
+```
+/user/data/GoldHEN/patches/xml/CUSA00001.xml
+/user/data/GoldHEN/patches/xml/CUSA03694.xml
+```
+
+The filename must exactly match the Title ID (nine characters, uppercase) with an `.xml` extension.
+
+## Installation methods
+
+<Tabs>
+  <Tab title="Via Itemzflow">
+    <Steps>
+      <Step title="Open game options">
+        Highlight the game in the Itemzflow grid and press **Triangle** to open the options menu.
+      </Step>
+      <Step title="Download or update patches">
+        Select the patches option. Itemzflow downloads the latest patch archive from the [GoldHEN Patch Repository](https://github.com/GoldHEN/GoldHEN_Patch_Repository) and extracts it to `/user/data/GoldHEN/patches/`.
+      </Step>
+      <Step title="Enable patches">
+        After the download completes, open the patch list for the game and toggle individual patches on or off.
+      </Step>
+    </Steps>
+  </Tab>
+  <Tab title="Via FTP">
+    <Steps>
+      <Step title="Connect an FTP client">
+        Connect to your PS4's IP address using any FTP client. See [FTP & Network Share](/features/ftp-nfs) for details.
+      </Step>
+      <Step title="Upload the XML file">
+        Upload your patch file to `/user/data/GoldHEN/patches/xml/` and name it `<TitleID>.xml`.
+      </Step>
+      <Step title="Enable patches in Itemzflow">
+        Open Itemzflow, navigate to the game, and enable the patches you want from the options menu.
+      </Step>
+    </Steps>
+  </Tab>
+</Tabs>
+
+<Tip>
+  You can also install and update patches using [PS4 Cheat Manager](https://pkg-zone.com/details/CHTM00777) (Title ID: CHTM00777), which provides an alternative UI for managing the same patch files.
+</Tip>
+
+## Patch file format
+
+Patch files use a straightforward XML schema:
+
+```xml
+<?xml version="1.0" encoding="utf-8"?>
+<Patch>
+    <!--
+      This will not be used by the plugin parser.
+      It is only used for generating the files for distribution.
+    -->
+    <TitleID>
+        <ID>EXAMPLE01</ID>
+        <ID>EXAMPLE02</ID>
+    </TitleID>
+    <Metadata Title="Example Game Title"
+              Name="Example Name"
+              Note="Example Note"
+              Author="Example Author"
+              PatchVer="1.0"
+              AppVer="00.34"
+              AppElf="eboot.bin">
+        <PatchList>
+            <!-- This is a code comment, improves code readability. -->
+            <!-- Code comment at end of line is also supported. -->
+            <Line Type="bytes" Address="0x00000000" Value="0102030405060708"/>
+            <Line Type="utf8" Address="0x00000000" Value="Hello World\x00"/>
+        </PatchList>
+    </Metadata>
+</Patch>
+```
+
+### Metadata attributes
+
+| Attribute | Description |
+|---|---|
+| `Title` | Game display name |
+| `Name` | Patch name shown in the Itemzflow UI |
+| `Note` | Optional note or description |
+| `Author` | Patch author |
+| `PatchVer` | Patch version number |
+| `AppVer` | Game version this patch targets (e.g. `00.34`) |
+| `AppElf` | ELF binary the patch targets (usually `eboot.bin`) |
+
+A single XML file can contain multiple `<Metadata>` blocks, one per patch set. Each block is listed separately in the Itemzflow patch UI.
+
+## Patch types
+
+Each `<Line>` element has a `Type` attribute that determines how the `Value` is interpreted and written to memory:
+
+| Type | Description | Example value |
+|---|---|---|
+| `byte` | 1-byte hex value | `"0x00"` |
+| `bytes16` | 2-byte hex value | `"0x0000"` |
+| `bytes32` | 4-byte hex value | `"0x00000000"` |
+| `bytes64` | 8-byte hex value | `"0x0000000000000000"` |
+| `bytes` | Arbitrary-length hex string (no spaces) | `"0102030405060708"` |
+| `float32` | Single-precision float | `"1.0"` |
+| `float64` | Double-precision float | `"1.0"` |
+| `utf8` | UTF-8 string (null-terminate with `\x00`) | `"Hello World\x00"` |
+| `utf16` | UTF-16 string | `"Hello World"` |
+
+## Enabling and disabling patches
+
+From the Itemzflow UI:
+
+<Steps>
+  <Step title="Open game options">
+    Highlight the game and press **Triangle**.
+  </Step>
+  <Step title="Open the patch list">
+    Select the patches option to see all available patches for that Title ID.
+  </Step>
+  <Step title="Toggle a patch">
+    Press **Cross** on a patch to toggle it on or off. Itemzflow writes `1\n` to the patch's settings file when enabled and `0\n` when disabled. An on-screen notification confirms the change.
+  </Step>
+</Steps>
+
+The change takes effect the next time the game is launched — patches are applied at game start, not while the game is running.
